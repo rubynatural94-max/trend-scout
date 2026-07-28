@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Person Business — Toolkit</title>
+<style>
+  :root{
+    --bg:#000000; --text:#EAE7E0; --dim:#7C7C7C; --dimmer:#525252;
+    --cream:#F3EFE5; --ink:#0A0A0A;
+    --stroke:rgba(255,255,255,0.10); --stroke-soft:rgba(255,255,255,0.06);
+    --field:rgba(255,255,255,0.03); --field-hover:rgba(255,255,255,0.06);
+    --flame:#FF7A3D; --good:#8ee6a8; --bad:#ff8a7a;
+    --font:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --sidebar-w:220px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg)}
+  body{font-family:var(--font);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
+
+  /* sidebar */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:#0a0a0a;
+    border-right:1px solid var(--stroke-soft);padding:26px 16px;z-index:50;
+    transform:translateX(-100%);transition:transform .25s ease;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar .brand{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--text);font-weight:500;display:block;margin-bottom:30px}
+  .sidebar .nav-item{
+    display:block;width:100%;text-align:left;background:none;border:none;color:var(--dim);
+    font-family:var(--font);font-size:14.5px;padding:12px 14px;border-radius:10px;cursor:pointer;margin-bottom:4px;
+    transition:all .15s ease;
+  }
+  .sidebar .nav-item:hover{background:var(--field-hover);color:var(--text)}
+  .sidebar .nav-item.active{background:var(--cream);color:var(--ink);font-weight:600}
+
+  .menu-btn{
+    position:fixed;top:20px;left:20px;z-index:60;background:var(--field);border:1px solid var(--stroke);
+    color:var(--text);width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:45;opacity:0;visibility:hidden;transition:opacity .2s ease}
+  .overlay.show{opacity:1;visibility:visible}
+
+  .main{padding:88px 22px 80px;max-width:640px;margin:0 auto}
+  .view{display:none}
+  .view.active{display:block}
+
+  h1{font-size:clamp(26px,5.6vw,40px);line-height:1.08;font-weight:500;letter-spacing:-0.02em;margin-bottom:12px}
+  .lede{color:var(--dim);font-size:14.5px;line-height:1.5;max-width:460px;margin-bottom:32px}
+
+  .step{margin-bottom:22px}
+  .step-label{display:block;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);margin-bottom:12px;font-weight:500}
+
+  input[type=text],input[type=password]{
+    width:100%;background:var(--field);border:1px solid var(--stroke);color:var(--text);
+    font-family:var(--font);font-size:15.5px;padding:15px 16px;border-radius:14px;outline:none;
+    transition:border-color .18s ease;
+  }
+  input[type=text]:focus,input[type=password]:focus{border-color:rgba(255,255,255,0.28)}
+  input::placeholder{color:var(--dimmer)}
+
+  .key-row{display:flex;gap:8px}
+  .key-row input{flex:1}
+  .key-row button{flex:none;background:transparent;border:1px solid var(--stroke);color:var(--dim);font-family:var(--font);font-size:13px;padding:0 16px;border-radius:14px;cursor:pointer}
+  .key-note{font-size:12.5px;color:var(--dimmer);margin-top:9px;line-height:1.5}
+  .key-note a{color:var(--dim)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{cursor:pointer;background:transparent;border:1px solid var(--stroke);color:var(--dim);font-family:var(--font);font-size:13.5px;padding:9px 14px;border-radius:100px;transition:all .15s ease}
+  .chip:hover{border-color:rgba(255,255,255,0.24);color:var(--text)}
+  .chip.on{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:500}
+
+  .go{width:100%;margin-top:12px;background:var(--cream);color:var(--ink);border:none;font-family:var(--font);font-size:16px;font-weight:600;padding:17px;border-radius:14px;cursor:pointer;letter-spacing:-0.01em;transition:opacity .15s ease}
+  .go:hover{opacity:.9}
+  .go:disabled{opacity:.4;cursor:not-allowed}
+
+  .status{text-align:center;font-size:13.5px;color:var(--dim);margin-top:16px;min-height:18px}
+  .status.err{color:var(--bad)}
+
+  .results{margin-top:20px}
+  .card{display:flex;gap:14px;padding:18px 4px;border-bottom:1px solid var(--stroke-soft);align-items:flex-start}
+  .card img{width:120px;height:68px;object-fit:cover;border-radius:8px;flex:none;background:var(--field)}
+  .card .meta{flex:1;min-width:0}
+  .card .title{font-size:14.5px;font-weight:500;color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px}
+  .card .sub{font-size:12.5px;color:var(--dimmer)}
+  .card .stats{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+  .stat{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:4px}
+  .stat b{color:var(--text);font-weight:600}
+  .flame{color:var(--flame);font-weight:700}
+  .card a{color:inherit;text-decoration:none;display:block}
+  .card a:hover .title{color:#fff}
+
+  .idea{border:1px solid var(--stroke);border-radius:16px;padding:20px;margin-bottom:14px;background:var(--field)}
+  .idea-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .idea-name{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+  .score{flex:none;text-align:right}
+  .score .num{font-size:20px;font-weight:700;color:var(--cream)}
+  .score .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);margin-top:2px}
+  .idea-desc{font-size:13.5px;color:var(--dim);line-height:1.55}
+  .idea-bar{height:4px;background:var(--stroke-soft);border-radius:4px;margin-top:12px;overflow:hidden}
+  .idea-bar i{display:block;height:100%;background:var(--flame);border-radius:4px}
+
+  .dash-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
+  .dash-card{display:block;text-align:left;width:100%;text-decoration:none;color:inherit;border:1px solid var(--stroke);border-radius:18px;padding:24px;background:var(--field);cursor:pointer;transition:border-color .15s ease,background .15s ease;font-family:var(--font)}
+  .dash-card:hover{border-color:rgba(255,255,255,0.24);background:var(--field-hover)}
+  .dash-card .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);margin-bottom:8px}
+  .dash-card h3{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin-bottom:6px}
+  .dash-card p{font-size:13.5px;color:var(--dim);line-height:1.5}
+
+  .foot{margin-top:56px;text-align:center;font-size:12px;color:var(--dimmer);line-height:1.6}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" type="button">☰</button>
+<div class="overlay" id="overlay"></div>
+<div class="sidebar" id="sidebar">
+  <span class="brand">One Person Business</span>
+  <button class="nav-item active" data-view="dashboard">Dashboard</button>
+  <button class="nav-item" data-view="feed">Trend Feed</button>
+  <button class="nav-item" data-view="niche">Niche Blend Lab</button>
+  <button class="nav-item" data-view="title">Title Blend Lab</button>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD / SETTINGS -->
+  <section class="view active" id="view-dashboard">
+    <h1>Your channel toolkit</h1>
+    <p class="lede">Everything's already connected — just pick a tool below. No keys or setup needed.</p>
+
+    <div class="dash-grid">
+      <button class="dash-card" data-goto="feed">
+        <div class="eyebrow">Data · YouTube API</div>
+        <h3>Trend Feed</h3>
+        <p>See what's blowing up right now, ranked by how fast it's gaining views.</p>
+      </button>
+      <button class="dash-card" data-goto="niche">
+        <div class="eyebrow">AI · Gemini</div>
+        <h3>Niche Blend Lab</h3>
+        <p>Category + audience → underserved sub-niche angles, scored by opportunity.</p>
+      </button>
+      <button class="dash-card" data-goto="title">
+        <div class="eyebrow">AI · Gemini + YouTube data</div>
+        <h3>Title Blend Lab</h3>
+        <p>Your niche → blended titles from what's trending, scored by match.</p>
+      </button>
+    </div>
+    <div class="foot">One Person Business.</div>
+  </section>
+
+  <!-- TREND FEED -->
+  <section class="view" id="view-feed">
+    <h1>What's about to blow up?</h1>
+    <p class="lede">Opens straight into what's moving right now. Change the niche any time to re-scan.</p>
+
+    <div class="step">
+      <span class="step-label">Niche or keyword</span>
+      <input type="text" id="feedQuery" value="mobility exercises over 40">
+      <div class="chips" id="feedChips" style="margin-top:12px">
+        <button class="chip on" data-q="mobility exercises over 40">Mobility/Fitness</button>
+        <button class="chip" data-q="personal finance investing">Finance</button>
+        <button class="chip" data-q="ai tools productivity">AI & Tech</button>
+        <button class="chip" data-q="self improvement mindset">Self-Improvement</button>
+        <button class="chip" data-q="make money online business">Business</button>
+      </div>
+    </div>
+
+    <div class="step"><span class="step-label">🔥 Blowing up — last 3 days</span><div id="feed3d" class="results"></div></div>
+    <div class="step"><span class="step-label">📈 Rising — last 3 weeks</span><div id="feed3w" class="results"></div></div>
+    <div class="status" id="feedStatus"></div>
+    <div class="foot">Estimates from public YouTube data. One Person Business.</div>
+  </section>
+
+  <!-- NICHE BLEND -->
+  <section class="view" id="view-niche">
+    <h1>Find the angle<br>nobody's covered</h1>
+    <p class="lede">Pick a category and who you're speaking to. Get sub-niche angles scored by opportunity.</p>
+
+    <div class="step">
+      <span class="step-label">Category</span>
+      <div class="chips" id="catChips">
+        <button class="chip on" data-v="Health & Fitness / Mobility">Health & Fitness</button>
+        <button class="chip" data-v="Personal Finance & Investing">Finance</button>
+        <button class="chip" data-v="AI & Technology">AI & Tech</button>
+        <button class="chip" data-v="Business & Entrepreneurship">Business</button>
+        <button class="chip" data-v="Self-Improvement">Self-Improvement</button>
+      </div>
+      <input type="text" id="catInput" placeholder="Or type your own category" style="margin-top:10px">
+    </div>
+    <div class="step">
+      <span class="step-label">Market / audience</span>
+      <input type="text" id="marketInput" value="adults over 40">
+    </div>
+    <button class="go" id="nicheGoBtn">Find niche blends</button>
+    <div class="status" id="nicheStatus"></div>
+    <div id="nicheIdeas" style="margin-top:28px"></div>
+    <div class="foot">AI-estimated opportunity scores, not measured search data. One Person Business.</div>
+  </section>
+
+  <!-- TITLE BLEND -->
+  <section class="view" id="view-title">
+    <h1>Blend a title that<br>already wants to work</h1>
+    <p class="lede">Give it your niche. It pulls what's trending there and blends fresh titles, ranked by match.</p>
+
+    <div class="step">
+      <span class="step-label">Your niche or video topic</span>
+      <input type="text" id="titleNicheInput" value="ankle mobility and tripping after 40">
+      <div class="chips" id="titleChips" style="margin-top:12px">
+        <button class="chip on" data-v="ankle mobility and tripping after 40">Mobility/Fitness</button>
+        <button class="chip" data-v="personal finance investing">Finance</button>
+        <button class="chip" data-v="ai tools productivity">AI & Tech</button>
+        <button class="chip" data-v="self improvement mindset">Self-Improvement</button>
+        <button class="chip" data-v="make money online business">Business</button>
+      </div>
+    </div>
+    <button class="go" id="titleGoBtn">Blend titles</button>
+    <div class="status" id="titleStatus"></div>
+    <div id="titleIdeas" style="margin-top:28px"></div>
+    <div class="foot">Match % is an AI estimate grounded in real trending titles where possible. One Person Business.</div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  // ---------- storage ----------
+  function storeGet(key){
+    if(window.storage){
+      return window.storage.get(key, false).then(function(r){ return r ? r.value : null; }).catch(function(){ return null; });
+    }
+    try { return Promise.resolve(localStorage.getItem(key)); } catch(e){ return Promise.resolve(null); }
+  }
+  function storeSet(key, value){
+    if(window.storage){ return window.storage.set(key, value, false).catch(function(){}); }
+    try { localStorage.setItem(key, value); } catch(e){}
+    return Promise.resolve();
+  }
+  function bindPersistentInput(inputEl, storageKey){
+    storeGet(storageKey).then(function(v){ if(v) inputEl.value = v; });
+    inputEl.addEventListener('change', function(){
+      var v = inputEl.value.trim();
+      if(v) storeSet(storageKey, v);
+    });
+  }
+
+  // ---------- formatting ----------
+  function fmtCompact(n){
+    n = Number(n);
+    if(n >= 1000000) return (n/1000000).toFixed(n>=10000000?0:1) + 'M';
+    if(n >= 1000) return (n/1000).toFixed(0) + 'K';
+    return String(n);
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function daysSince(iso){ return Math.max((Date.now() - new Date(iso).getTime())/86400000, 0.5); }
+
+  // ---------- Worker proxy (hides your keys — no per-user setup needed) ----------
+  var WORKER_BASE = 'https://trend-scout.titusharmony162.workers.dev';
+
+  function fetchVideos(query, days){
+    var url = WORKER_BASE + '/youtube?q=' + encodeURIComponent(query) + '&days=' + days;
+    return fetch(url).then(function(r){
+      if(!r.ok) return r.json().then(function(d){ throw new Error(d.error || 'YouTube request failed.'); });
+      return r.json();
+    });
+  }
+  function renderVideoCard(v){
+    var vpd = fmtCompact(Math.round(v.velocity));
+    return '<div class="card"><a href="https://www.youtube.com/watch?v='+v.id+'" target="_blank" rel="noopener" style="display:flex;gap:14px;width:100%">'
+      + '<img src="'+v.thumb+'" alt=""><div class="meta">'
+      + '<div class="title">'+escapeHtml(v.title)+'</div>'
+      + '<div class="sub">'+escapeHtml(v.channel)+' · '+v.days+'d ago</div>'
+      + '<div class="stats"><span class="stat"><b>'+fmtCompact(v.views)+'</b>&nbsp;views</span>'
+      + '<span class="stat flame">🔥 <b>'+vpd+'</b>/day</span></div></div></a></div>';
+  }
+
+  // ---------- Gemini (via Worker) ----------
+  function callGemini(prompt){
+    return fetch(WORKER_BASE + '/gemini', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
+    }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+    .then(function(res){
+      if(!res.ok){ throw new Error((res.d.error && res.d.error.message) || res.d.error || 'Gemini request failed.'); }
+      var cand = res.d.candidates && res.d.candidates[0];
+      var text = cand && cand.content && cand.content.parts && cand.content.parts[0] && cand.content.parts[0].text;
+      if(!text) throw new Error('Gemini returned no text.');
+      return JSON.parse(text.replace(/```json|```/g, '').trim());
+    });
+  }
+
+  // ---------- sidebar nav ----------
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', function(){ sidebar.classList.add('open'); overlay.classList.add('show'); });
+  overlay.addEventListener('click', function(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+  function goToView(name){
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById('view-'+name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view === name); });
+    sidebar.classList.remove('open'); overlay.classList.remove('show');
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    b.addEventListener('click', function(){ goToView(b.dataset.view); });
+  });
+  document.querySelectorAll('[data-goto]').forEach(function(b){
+    b.addEventListener('click', function(){ goToView(b.dataset.goto); });
+  });
+
+  // ---------- dashboard ----------
+  // Keys now live securely in the Worker — nothing to configure here anymore.
+
+  // ---------- TREND FEED ----------
+  var feedState = { query: 'mobility exercises over 40' };
+  var feedQueryInput = document.getElementById('feedQuery');
+  var feedChips = document.getElementById('feedChips');
+  var feedStatus = document.getElementById('feedStatus');
+
+  feedChips.addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if(!b) return;
+    feedState.query = b.dataset.q; feedQueryInput.value = feedState.query;
+    Array.prototype.forEach.call(feedChips.children, function(c){c.classList.remove('on')}); b.classList.add('on');
+    runFeed();
+  });
+  feedQueryInput.addEventListener('change', function(){
+    feedState.query = feedQueryInput.value.trim();
+    Array.prototype.forEach.call(feedChips.children, function(c){c.classList.remove('on')});
+    runFeed();
+  });
+  function renderFeedInto(id, vids){
+    var el = document.getElementById(id);
+    if(!vids || vids.length===0){ el.innerHTML = '<div class="status">Nothing found in this window yet.</div>'; return; }
+    el.innerHTML = vids.slice().sort(function(a,b){return b.velocity-a.velocity}).slice(0,8).map(renderVideoCard).join('');
+  }
+  function runFeed(){
+    if(!feedState.query) return;
+    feedStatus.className='status'; feedStatus.textContent='Loading…';
+    Promise.all([ fetchVideos(feedState.query, 3), fetchVideos(feedState.query, 21) ])
+      .then(function(r){ renderFeedInto('feed3d', r[0]); renderFeedInto('feed3w', r[1]); feedStatus.textContent=''; })
+      .catch(function(err){ feedStatus.className='status err'; feedStatus.textContent = err.message || 'Could not load the feed.'; });
+  }
+
+  // ---------- NICHE BLEND ----------
+  var nicheState = { category:'Health & Fitness / Mobility', market:'adults over 40' };
+  var catChips = document.getElementById('catChips');
+  var catInput = document.getElementById('catInput');
+  var marketInput = document.getElementById('marketInput');
+  var nicheGoBtn = document.getElementById('nicheGoBtn');
+  var nicheStatus = document.getElementById('nicheStatus');
+  var nicheIdeas = document.getElementById('nicheIdeas');
+
+  catChips.addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if(!b) return;
+    nicheState.category = b.dataset.v; catInput.value='';
+    Array.prototype.forEach.call(catChips.children, function(c){c.classList.remove('on')}); b.classList.add('on');
+  });
+  catInput.addEventListener('input', function(){
+    if(catInput.value.trim()){ nicheState.category = catInput.value.trim();
+      Array.prototype.forEach.call(catChips.children, function(c){c.classList.remove('on')}); }
+  });
+  marketInput.addEventListener('input', function(){ nicheState.market = marketInput.value.trim(); });
+
+  nicheGoBtn.addEventListener('click', function(){
+    if(!nicheState.category || !nicheState.market){ nicheStatus.className='status err'; nicheStatus.textContent='Fill in a category and a market.'; return; }
+    nicheGoBtn.disabled=true; nicheGoBtn.textContent='Blending…';
+    nicheStatus.className='status'; nicheStatus.textContent=''; nicheIdeas.innerHTML='';
+
+    var prompt = 'You are a YouTube niche strategist helping a faceless channel creator find an underserved sub-niche. '
+      + 'Category: "'+nicheState.category+'". Target market/audience: "'+nicheState.market+'".\n'
+      + 'Generate 5 specific sub-niche angle ideas combining this category and market in ways most channels have NOT already saturated. '
+      + 'Each should be a concrete content angle, not just the category restated. Give each an opportunity_score 0-100 and a one-sentence reasoning.\n'
+      + 'Respond ONLY with JSON, no markdown fences, no preamble: {"ideas":[{"name":"...", "description":"...", "opportunity_score":0, "reasoning":"..."}]}';
+
+    callGemini(prompt).then(function(parsed){
+      var ideas = (parsed.ideas||[]).sort(function(a,b){return b.opportunity_score-a.opportunity_score});
+      nicheIdeas.innerHTML = ideas.map(function(idea){
+        return '<div class="idea"><div class="idea-top"><div class="idea-name">'+escapeHtml(idea.name)+'</div>'
+          + '<div class="score"><div class="num">'+idea.opportunity_score+'%</div><div class="lbl">Opportunity</div></div></div>'
+          + '<div class="idea-desc">'+escapeHtml(idea.description)+'</div>'
+          + '<div class="idea-bar"><i style="width:'+idea.opportunity_score+'%"></i></div>'
+          + '<div class="idea-desc" style="margin-top:10px;color:var(--dimmer)">'+escapeHtml(idea.reasoning)+'</div></div>';
+      }).join('');
+    }).catch(function(err){ nicheStatus.className='status err'; nicheStatus.textContent = err.message || 'Blend failed — try again.'; })
+    .finally(function(){ nicheGoBtn.disabled=false; nicheGoBtn.textContent='Find niche blends'; });
+  });
+
+  // ---------- TITLE BLEND ----------
+  var titleNicheInput = document.getElementById('titleNicheInput');
+  var titleChips = document.getElementById('titleChips');
+  var titleGoBtn = document.getElementById('titleGoBtn');
+  var titleStatus = document.getElementById('titleStatus');
+  var titleIdeas = document.getElementById('titleIdeas');
+  var titleState = { niche: titleNicheInput.value };
+
+  titleChips.addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if(!b) return;
+    titleState.niche = b.dataset.v; titleNicheInput.value = titleState.niche;
+    Array.prototype.forEach.call(titleChips.children, function(c){c.classList.remove('on')}); b.classList.add('on');
+  });
+  titleNicheInput.addEventListener('input', function(){
+    titleState.niche = titleNicheInput.value.trim();
+    Array.prototype.forEach.call(titleChips.children, function(c){c.classList.remove('on')});
+  });
+
+  titleGoBtn.addEventListener('click', function(){
+    if(!titleState.niche){ titleStatus.className='status err'; titleStatus.textContent='Enter a niche or topic first.'; return; }
+    titleGoBtn.disabled=true; titleGoBtn.textContent='Blending…';
+    titleStatus.className='status'; titleStatus.textContent="Checking what's trending…"; titleIdeas.innerHTML='';
+
+    fetchVideos(titleState.niche, 30).catch(function(){ return []; }).then(function(vids){
+      var top = vids.sort(function(a,b){return b.velocity-a.velocity}).slice(0,6);
+      var trendBlock = top.length
+        ? 'Real trending titles right now in this niche (title — approx views — views/day):\n'
+          + top.map(function(v){ return '"'+v.title+'" — '+fmtCompact(v.views)+' views — '+fmtCompact(Math.round(v.velocity))+'/day'; }).join('\n')
+        : 'No live trending data available — base this on general knowledge of what performs in this niche.';
+      titleStatus.textContent = 'Blending titles…';
+
+      var prompt = 'You write YouTube titles for a faceless evergreen-advice channel. Niche/topic: "'+titleState.niche+'".\n'
+        + trendBlock + '\n\nTask: reverse-engineer the STRUCTURE of the strongest trending titles above (not their exact wording), '
+        + 'then blend that structure with the niche to write 5 original title options. Keep each under 100 characters. '
+        + 'For each, give a match_score 0-100 and a one-sentence reasoning. Sort by match_score descending.\n'
+        + 'Respond ONLY with JSON, no markdown fences, no preamble: {"titles":[{"title":"...", "match_score":0, "reasoning":"..."}]}';
+
+      return callGemini(prompt);
+    })
+    .then(function(parsed){
+      var titles = (parsed.titles||[]).sort(function(a,b){return b.match_score-a.match_score});
+      titleIdeas.innerHTML = titles.map(function(t){
+        return '<div class="idea"><div class="idea-top"><div class="idea-name">'+escapeHtml(t.title)+'</div>'
+          + '<div class="score"><div class="num">'+t.match_score+'%</div><div class="lbl">Match</div></div></div>'
+          + '<div class="idea-bar"><i style="width:'+t.match_score+'%"></i></div>'
+          + '<div class="idea-desc" style="margin-top:10px">'+escapeHtml(t.reasoning)+'</div></div>';
+      }).join('');
+      titleStatus.textContent='';
+    })
+    .catch(function(err){ titleStatus.className='status err'; titleStatus.textContent = err.message || 'Blend failed — try again.'; })
+    .finally(function(){ titleGoBtn.disabled=false; titleGoBtn.textContent='Blend titles'; });
+  });
+
+  // ---------- init ----------
+  runFeed();
+})();
+</script>
+</body>
+</html>
